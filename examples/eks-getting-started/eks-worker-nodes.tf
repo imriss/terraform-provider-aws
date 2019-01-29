@@ -2,13 +2,13 @@
 # EKS Worker Nodes Resources
 #  * IAM role allowing Kubernetes actions to access other AWS services
 #  * EC2 Security Group to allow networking traffic
-#  * Data source to fetch latest EKS worker AMI
+#  * Data source to fetch latest EKS worker AMI: ami-0a2abab4107669c1b (us-west-2)
 #  * AutoScaling Launch Configuration to configure worker instances
 #  * AutoScaling Group to launch worker instances
 #
 
-resource "aws_iam_role" "rfarrahi-node" {
-  name = "terraform-eks-rfarrahi-node"
+resource "aws_iam_role" "rfarrahi01mysqltest-node" {
+  name = "terraform-eks-rfarrahi01mysqltest-node"
 
   assume_role_policy = <<POLICY
 {
@@ -26,30 +26,30 @@ resource "aws_iam_role" "rfarrahi-node" {
 POLICY
 }
 
-resource "aws_iam_role_policy_attachment" "rfarrahi-node-AmazonEKSWorkerNodePolicy" {
+resource "aws_iam_role_policy_attachment" "rfarrahi01mysqltest-node-AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = "${aws_iam_role.rfarrahi-node.name}"
+  role       = "${aws_iam_role.rfarrahi01mysqltest-node.name}"
 }
 
-resource "aws_iam_role_policy_attachment" "rfarrahi-node-AmazonEKS_CNI_Policy" {
+resource "aws_iam_role_policy_attachment" "rfarrahi01mysqltest-node-AmazonEKS_CNI_Policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = "${aws_iam_role.rfarrahi-node.name}"
+  role       = "${aws_iam_role.rfarrahi01mysqltest-node.name}"
 }
 
-resource "aws_iam_role_policy_attachment" "rfarrahi-node-AmazonEC2ContainerRegistryReadOnly" {
+resource "aws_iam_role_policy_attachment" "rfarrahi01mysqltest-node-AmazonEC2ContainerRegistryReadOnly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = "${aws_iam_role.rfarrahi-node.name}"
+  role       = "${aws_iam_role.rfarrahi01mysqltest-node.name}"
 }
 
-resource "aws_iam_instance_profile" "rfarrahi-node" {
-  name = "terraform-eks-rfarrahi"
-  role = "${aws_iam_role.rfarrahi-node.name}"
+resource "aws_iam_instance_profile" "rfarrahi01mysqltest-node" {
+  name = "terraform-eks-rfarrahi01mysqltest"
+  role = "${aws_iam_role.rfarrahi01mysqltest-node.name}"
 }
 
-resource "aws_security_group" "rfarrahi-node" {
-  name        = "terraform-eks-rfarrahi-node"
+resource "aws_security_group" "rfarrahi01mysqltest-node" {
+  name        = "terraform-eks-rfarrahi01mysqltest-node"
   description = "Security group for all nodes in the cluster"
-  vpc_id      = "${aws_vpc.rfarrahi.id}"
+  vpc_id      = "${aws_vpc.rfarrahi01mysqltest.id}"
 
   egress {
     from_port   = 0
@@ -60,36 +60,48 @@ resource "aws_security_group" "rfarrahi-node" {
 
   tags = "${
     map(
-     "Name", "terraform-eks-rfarrahi-node",
+     "Name", "terraform-eks-rfarrahi01mysqltest-node",
+     "stack_name_for_billing", "terraform-eks-rfarrahi01mysqltest",
+     "cost_center", "4444444",
      "kubernetes.io/cluster/${var.cluster-name}", "owned",
     )
   }"
 }
 
-resource "aws_security_group_rule" "rfarrahi-node-ingress-self" {
+resource "aws_security_group_rule" "rfarrahi01mysqltest-node-ingress-self" {
   description              = "Allow node to communicate with each other"
   from_port                = 0
   protocol                 = "-1"
-  security_group_id        = "${aws_security_group.rfarrahi-node.id}"
-  source_security_group_id = "${aws_security_group.rfarrahi-node.id}"
+  security_group_id        = "${aws_security_group.rfarrahi01mysqltest-node.id}"
+  source_security_group_id = "${aws_security_group.rfarrahi01mysqltest-node.id}"
   to_port                  = 65535
   type                     = "ingress"
 }
 
-resource "aws_security_group_rule" "rfarrahi-node-ingress-cluster" {
+resource "aws_security_group_rule" "rfarrahi01mysqltest-node-ingress-cluster" {
   description              = "Allow worker Kubelets and pods to receive communication from the cluster control plane"
   from_port                = 1025
   protocol                 = "tcp"
-  security_group_id        = "${aws_security_group.rfarrahi-node.id}"
-  source_security_group_id = "${aws_security_group.rfarrahi-cluster.id}"
+  security_group_id        = "${aws_security_group.rfarrahi01mysqltest-node.id}"
+  source_security_group_id = "${aws_security_group.rfarrahi01mysqltest-cluster.id}"
   to_port                  = 65535
+  type                     = "ingress"
+}
+
+resource "aws_security_group_rule" "rfarrahi01mysqltest-node-ingress-ssh" {
+  description              = "Allow Nakisa to communicate with the nodes"
+  from_port                = 22
+  protocol                 = "tcp"
+  security_group_id        = "${aws_security_group.rfarrahi01mysqltest-node.id}"
+  cidr_blocks              = ["216.46.4.18/32"]
+  to_port                  = 22
   type                     = "ingress"
 }
 
 data "aws_ami" "eks-worker" {
   filter {
     name   = "name"
-    values = ["amazon-eks-node-v*"]
+    values = ["amazon-eks-node-1.11-v2019*"]
   }
 
   most_recent = true
@@ -102,38 +114,51 @@ data "aws_ami" "eks-worker" {
 # information into the AutoScaling Launch Configuration.
 # More information: https://docs.aws.amazon.com/eks/latest/userguide/launch-workers.html
 locals {
-  rfarrahi-node-userdata = <<USERDATA
+  rfarrahi01mysqltest-node-userdata = <<USERDATA
 #!/bin/bash
 set -o xtrace
-/etc/eks/bootstrap.sh --apiserver-endpoint '${aws_eks_cluster.rfarrahi.endpoint}' --b64-cluster-ca '${aws_eks_cluster.rfarrahi.certificate_authority.0.data}' '${var.cluster-name}'
+/etc/eks/bootstrap.sh --apiserver-endpoint '${aws_eks_cluster.rfarrahi01mysqltest.endpoint}' --b64-cluster-ca '${aws_eks_cluster.rfarrahi01mysqltest.certificate_authority.0.data}' '${var.cluster-name}'
 USERDATA
 }
 
-resource "aws_launch_configuration" "rfarrahi" {
+resource "aws_launch_configuration" "rfarrahi01mysqltest" {
   associate_public_ip_address = true
-  iam_instance_profile        = "${aws_iam_instance_profile.rfarrahi-node.name}"
+  iam_instance_profile        = "${aws_iam_instance_profile.rfarrahi01mysqltest-node.name}"
   image_id                    = "${data.aws_ami.eks-worker.id}"
-  instance_type               = "m4.large"
-  name_prefix                 = "terraform-eks-rfarrahi"
-  security_groups             = ["${aws_security_group.rfarrahi-node.id}"]
-  user_data_base64            = "${base64encode(local.rfarrahi-node-userdata)}"
+  instance_type               = "m5.large"
+  key_name                    = "nakisa-rd-rfarrahi-terraform-oregon"
+  name_prefix                 = "terraform-eks-rfarrahi01mysqltest"
+  security_groups             = ["${aws_security_group.rfarrahi01mysqltest-node.id}"]
+  user_data_base64            = "${base64encode(local.rfarrahi01mysqltest-node-userdata)}"
 
   lifecycle {
     create_before_destroy = true
   }
 }
 
-resource "aws_autoscaling_group" "rfarrahi" {
-  desired_capacity     = 2
-  launch_configuration = "${aws_launch_configuration.rfarrahi.id}"
-  max_size             = 2
+resource "aws_autoscaling_group" "rfarrahi01mysqltest" {
+  desired_capacity     = 3
+  launch_configuration = "${aws_launch_configuration.rfarrahi01mysqltest.id}"
+  max_size             = 3
   min_size             = 1
-  name                 = "terraform-eks-rfarrahi"
-  vpc_zone_identifier  = ["${aws_subnet.rfarrahi.*.id}"]
+  name                 = "terraform-eks-rfarrahi01mysqltest"
+  vpc_zone_identifier  = ["${aws_subnet.rfarrahi01mysqltest.*.id}"]
 
   tag {
     key                 = "Name"
-    value               = "terraform-eks-rfarrahi"
+    value               = "terraform-eks-rfarrahi01mysqltest"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "stack_name_for_billing"
+    value               = "terraform-eks-rfarrahi01mysqltest"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "cost_center"
+    value               = "4444444"
     propagate_at_launch = true
   }
 

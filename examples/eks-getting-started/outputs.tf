@@ -13,7 +13,7 @@ metadata:
   namespace: kube-system
 data:
   mapRoles: |
-    - rolearn: ${aws_iam_role.rfarrahi-node.arn}
+    - rolearn: ${aws_iam_role.rfarrahi01mysqltest-node.arn}
       username: system:node:{{EC2PrivateDNSName}}
       groups:
         - system:bootstrappers
@@ -26,8 +26,8 @@ CONFIGMAPAWSAUTH
 apiVersion: v1
 clusters:
 - cluster:
-    server: ${aws_eks_cluster.rfarrahi.endpoint}
-    certificate-authority-data: ${aws_eks_cluster.rfarrahi.certificate_authority.0.data}
+    server: ${aws_eks_cluster.rfarrahi01mysqltest.endpoint}
+    certificate-authority-data: ${aws_eks_cluster.rfarrahi01mysqltest.certificate_authority.0.data}
   name: kubernetes
 contexts:
 - context:
