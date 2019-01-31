@@ -88,6 +88,16 @@ resource "aws_security_group_rule" "rfarrahi01mysqltest-node-ingress-cluster" {
   type                     = "ingress"
 }
 
+resource "aws_security_group_rule" "rfarrahi01mysqltest-node-ingress-cluster" {
+  description              = "Allow worker Kubelets and pods to receive communication from the cluster control plane (443)"
+  from_port                = 443
+  protocol                 = "tcp"
+  security_group_id        = "${aws_security_group.rfarrahi01mysqltest-node.id}"
+  source_security_group_id = "${aws_security_group.rfarrahi01mysqltest-cluster.id}"
+  to_port                  = 443
+  type                     = "ingress"
+}
+
 resource "aws_security_group_rule" "rfarrahi01mysqltest-node-ingress-ssh" {
   description              = "Allow Nakisa to communicate with the nodes"
   from_port                = 22
