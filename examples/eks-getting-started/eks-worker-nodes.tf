@@ -117,6 +117,7 @@ data "aws_ami" "eks-worker" {
   most_recent = true
   owners      = ["602401143452"] # Amazon EKS AMI Account ID
 }
+# values = amazon-eks-node-1.10-v2019* for eks.3
 
 # EKS currently documents this required userdata for EKS worker nodes to
 # properly configure Kubernetes applications on the EC2 instance.
