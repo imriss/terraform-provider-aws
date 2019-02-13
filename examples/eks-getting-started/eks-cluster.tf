@@ -74,7 +74,7 @@ resource "aws_security_group_rule" "rfarrahi01mysqltest-cluster-ingress-workstat
 resource "aws_eks_cluster" "rfarrahi01mysqltest" {
   name     = "${var.cluster-name}"
   role_arn = "${aws_iam_role.rfarrahi01mysqltest-cluster.arn}"
-
+  version  = "1.10"
   vpc_config {
     security_group_ids = ["${aws_security_group.rfarrahi01mysqltest-cluster.id}"]
     subnet_ids         = ["${aws_subnet.rfarrahi01mysqltest.*.id}"]
@@ -85,3 +85,4 @@ resource "aws_eks_cluster" "rfarrahi01mysqltest" {
     "aws_iam_role_policy_attachment.rfarrahi01mysqltest-cluster-AmazonEKSServicePolicy",
   ]
 }
+# version 1.10 for having eks.3

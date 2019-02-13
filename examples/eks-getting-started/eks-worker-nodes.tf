@@ -88,7 +88,7 @@ resource "aws_security_group_rule" "rfarrahi01mysqltest-node-ingress-cluster" {
   type                     = "ingress"
 }
 
-resource "aws_security_group_rule" "rfarrahi01mysqltest-node-ingress-cluster" {
+resource "aws_security_group_rule" "rfarrahi01mysqltest-node-ingress-cluster443" {
   description              = "Allow worker Kubelets and pods to receive communication from the cluster control plane (443)"
   from_port                = 443
   protocol                 = "tcp"
@@ -147,9 +147,9 @@ resource "aws_launch_configuration" "rfarrahi01mysqltest" {
 }
 
 resource "aws_autoscaling_group" "rfarrahi01mysqltest" {
-  desired_capacity     = 3
+  desired_capacity     = 2
   launch_configuration = "${aws_launch_configuration.rfarrahi01mysqltest.id}"
-  max_size             = 3
+  max_size             = 4
   min_size             = 1
   name                 = "terraform-eks-rfarrahi01mysqltest"
   vpc_zone_identifier  = ["${aws_subnet.rfarrahi01mysqltest.*.id}"]
