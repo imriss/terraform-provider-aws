@@ -111,7 +111,7 @@ resource "aws_security_group_rule" "rfarrahi01mysqltest-node-ingress-ssh" {
 data "aws_ami" "eks-worker" {
   filter {
     name   = "name"
-    values = ["amazon-eks-node-1.11-v2019*"]
+    values = ["amazon-eks-node-1.10-v2019*"]
   }
 
   most_recent = true
